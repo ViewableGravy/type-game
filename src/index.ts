@@ -1,4 +1,5 @@
 import type { HandleEast, HandleNorth, HandleSouth, HandleWest } from "./handlers/direction";
+import type { HandleInventory } from "./handlers/inventory";
 import type { Shift } from "./helper";
 import type { ACTION, DIRECTION, Location, Player, Room } from "./location";
 import type { ResolveHistory } from "./resolve";
@@ -13,7 +14,7 @@ export type Map = CreateMap<[
 ]>;
 
 
-type InitializePlayer<N extends Location> = Player<[Map[N[1]][N[0]]], N, {}, { [Key in `${N[0]},${N[0]}`]: true }>
+type InitializePlayer<N extends Location> = Player<[Map[N[1]][N[0]]], N, { pickles: 1, cheese: 1, bacon: 1 }, { [Key in `${N[0]},${N[0]}`]: true }>
 
 type Navigate<TPlayer extends Player, TDirection extends DIRECTION> = 
   TDirection extends "north" ? HandleNorth<TPlayer> :
@@ -21,13 +22,6 @@ type Navigate<TPlayer extends Player, TDirection extends DIRECTION> =
   TDirection extends "east" ? HandleEast<TPlayer> :
   TDirection extends "west" ? HandleWest<TPlayer> :
   Player
-
-type AccessInventory<TPlayer extends Player> = Player<
-  [...TPlayer['_data'], TPlayer['_inventory']],
-  TPlayer['_location'],
-  TPlayer['_inventory'],
-  TPlayer['_visited']
->
 
 type ChainNavigate<TPlayer extends Player, TDirections extends Array<DIRECTION>> =
   TDirections extends []
@@ -41,7 +35,7 @@ type ChainActions<TPlayer extends Player, TActions extends Array<ACTION>> =
       TActions[0] extends DIRECTION 
         ? Navigate<TPlayer, TActions[0]> : 
       TActions[0] extends "inventory" 
-        ? AccessInventory<TPlayer> :
+        ? HandleInventory<TPlayer> :
       TPlayer,
       Shift<TActions>
     >
@@ -56,6 +50,7 @@ type Result = ChainActions<InitializePlayer<[1, 1]>, [
   "north",
   "east",
   "south",
+  "inventory"
 ]>
 
 
