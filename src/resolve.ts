@@ -1,14 +1,5 @@
-import type { TuplifyUnion } from "./helper";
+import type { GetPlusOne, Shift, TuplifyUnion } from "./helper";
 import type { DIRECTION, Message, Player, Room } from "./location"
-
-type CreateCommaSeparatedType<T extends string, K extends string = T> = 
- [T] extends [never] 
-    ? "" 
-    : K extends any 
-        ? Exclude<T, K> extends never
-            ? `${K}` 
-            : `${K},${CreateCommaSeparatedType<Exclude<T, K>>}` 
-        : "";
 
 type UnionToCommaSeparated<T extends string> =
   TuplifyUnion<T> extends []
@@ -18,8 +9,6 @@ type UnionToCommaSeparated<T extends string> =
   TuplifyUnion<T> extends [infer First, ...infer Rest]
     ? First extends string ? `${First}, ${UnionToCommaSeparated<Rest[number] extends string ? Rest[number] : never>}` : never :
   never
-
-
 
 export namespace ResolveMessages {
   type CANNOT_NAVIGATE = "CANNOT_NAVIGATE"
@@ -70,15 +59,23 @@ export namespace ResolveMessages {
 
 export type ResolveData<TPlayer extends Player> = TPlayer['_data']
 export type ResolveRoomName<TPlayer extends Player> = ResolveData<TPlayer>['name']
-type ResolveInventory<TPlayer extends Player> = TPlayer['_inventory']
+export type GetMessageFromData<First> = 
+  First extends Room 
+    ? First['name'] :
+  First extends Message
+    ? ResolveResponse<First> :
+  "GET_MESSAGE_FROM_DATA_ERROR"
 
-export type GetNameFromInferredRoom<First extends any> = First extends Room ? First['name'] : never
-
-type SuccessfulAction = "SUCCESS"
+type DID_NOT_RESOLVE_MESSAGE = "DID_NOT_RESOLVE_MESSAGE"
 
 
-export type ResolveResponse<TData extends any> =
-  TData extends Room | Message ?
+
+
+
+
+
+export type ResolveResponse<TData> =
+  TData extends Message ?
     TData extends ResolveMessages.MapBoundaryPreventsNavigation<DIRECTION> 
       ? ResolveMessages.ResolveMapBoundaryPreventsNavigation<TData> :
     TData extends ResolveMessages.NoPathPresent<DIRECTION>
@@ -87,29 +84,99 @@ export type ResolveResponse<TData extends any> =
       ? ResolveMessages.ResolveInventoryIsEmpty<TData> :
     TData extends ResolveMessages.InventoryContainsItems<Record<string, any>>
       ? ResolveMessages.ResolveInventoryItems<TData> :
-    SuccessfulAction :
+    DID_NOT_RESOLVE_MESSAGE :
+  TData extends Room
+    ? TData :
+  'RESOLVE_RESPONSE_ERROR'
+
+type DirectionToString<TRoom extends Room, TDirection extends DIRECTION> = 
+  TDirection extends 'north'
+    ? TRoom['north'] extends true ? 'north' : "" :
+  TDirection extends 'south'
+    ? TRoom['south'] extends true ? 'south' : "" :
+  TDirection extends 'east'
+    ? TRoom['east'] extends true ? 'east' : "" :
+  TDirection extends 'west'
+    ? TRoom['west'] extends true ? 'west' : "" :
   never
 
+type SomeAreNotEmpty<T extends Array<string>, TCount extends number = 0> =
+  T extends [] 
+    ? TCount extends 0 ? false : true 
+    : T[0] extends "" 
+      ? SomeAreNotEmpty<Shift<T>, TCount>
+      : TCount extends 0 ? true : false
+
+type SimplifyDirections<N extends string, S extends string, E extends string, W extends string> =
+  `${
+    SomeAreNotEmpty<[S, E, W]> extends true ? N extends "" ? "" : `${N}, ` : N
+  }${
+    SomeAreNotEmpty<[E, W]> extends true ? S extends "" ? "" : `${S}, ` : S
+  }${
+    SomeAreNotEmpty<[W]> extends true ? E extends "" ? "" : `${E}, ` : E
+  }${
+    W
+  }`
+
+type DisplayUserNavigationOptions<TRoom extends Room> =
+  SimplifyDirections<
+    DirectionToString<TRoom, 'north'>,
+    DirectionToString<TRoom, 'south'>,
+    DirectionToString<TRoom, 'east'>,
+    DirectionToString<TRoom, 'west'>
+  >
+
+
+
+/**
+ * Type that should only be run on the final object in history to provide the user with a list
+ * of potential actions they can take
+ */
+type ResolveFinalActions<TPlayer extends Player> =
+  ResolveData<TPlayer> extends [infer Current]
+    ? Current extends Room
+      ? `[Current]\n\nAfter your previous actions, you stand in a ${Current['name']}. You can perform the following actions \n - [Navigate]: ${DisplayUserNavigationOptions<Current>}\n - [Action]: Check your inventory ('inventory')` 
+      : "RESOLVE_POTENTIAL_ACTIONS_ERROR"
+    : never
+
+
+
+
+type ResolveMessage<TData> = TData extends Message ? ResolveResponse<TData> : "RESOLVE_MESSAGE_ERROR"
+type ResolveRoom<TPlayer extends Player> = ResolveData<TPlayer> extends [infer Single] ? ResolveFinalActions<TPlayer> : "RESOLVE_ROOM_ERROR: More than one room in history"
+
+type StartMessage<TFirst extends boolean> = TFirst extends true ? "The player starts in a " : ""
+type ActionConnectorMessage<TFirst extends boolean> = TFirst extends true ? "Before taking the following actions:" : "\n->"
+
+
+
+
+
+
+
+
+/**
+ * Takes the player object and converts the _data attribute (history) into a summary of the players actions
+ * as well as providing the user with a list of potential actions they can take
+ */
 export type ResolveHistory<TPlayer extends Player, TFirst extends boolean = true> = 
   ResolveData<TPlayer> extends [] 
     ? "Game Not started" : 
   ResolveData<TPlayer> extends [infer First] 
-    ? ResolveResponse<First> extends SuccessfulAction
-      ? GetNameFromInferredRoom<First>  
-      : ResolveResponse<First> :
+    ? ResolveResponse<First> extends Message
+      ? ResolveMessage<First> 
+      : ResolveRoom<TPlayer> :
   ResolveData<TPlayer> extends [infer First, ...infer Rest] 
-    ? ResolveResponse<First> extends SuccessfulAction
-      ? `${TFirst extends true ? "The player starts in a " : ""}${GetNameFromInferredRoom<First>} ${TFirst extends true ? "Before taking the following actions:" : "->"} ${
-          ResolveHistory<
-            Player<
-              Rest extends Array<Room | Message> ? Rest : never, 
-              TPlayer['_location'], 
-              TPlayer['_inventory'], 
-              TPlayer['_visited']
-            >,
-            false
-          >
-        }`
-      : ResolveResponse<First>
+    ? `${StartMessage<TFirst>}${GetMessageFromData<First>} ${ActionConnectorMessage<TFirst>} ${
+        ResolveHistory<
+          Player<
+            Rest extends Array<Room | Message> ? Rest : never, 
+            TPlayer['_location'], 
+            TPlayer['_inventory'], 
+            TPlayer['_visited']
+          >,
+          false
+        >
+      }`
     : never
 

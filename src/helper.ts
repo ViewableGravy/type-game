@@ -1,6 +1,9 @@
 
-/**** ARRAY HELPERS ****/
+/** Boolean Helpers */
+export type Not<T extends boolean> = T extends true ? false : true;
+export type If<T extends boolean, Then, Else> = T extends true ? Then : Else;
 
+/**** ARRAY HELPERS ****/
 export type HasIndex<TIndex extends number, TArray extends any[]> = 
   TArray extends Record<TIndex, any> 
     ? true 
@@ -8,6 +11,18 @@ export type HasIndex<TIndex extends number, TArray extends any[]> =
 
 export type Pop<T extends Array<any>> = T extends [...infer Rest, infer Last] ? Rest : never;
 export type Shift<T extends Array<any>> = T extends [infer First, ...infer Rest] ? Rest : never;
+export type Some<T extends Array<any>, TType> =
+  T extends [] 
+    ? false 
+    : T[0] extends TType 
+      ? true 
+      : Some<Shift<T>, TType>
+export type Every<T extends Array<any>, TType> =
+  T extends [] 
+    ? true 
+    : T[0] extends TType 
+      ? Every<Shift<T>, TType>
+      : false
 
 export type HasNextIndex<TIndex extends number, TArray extends any[]> = 
   TArray['length'] extends TIndex 
@@ -33,7 +48,6 @@ export type GetMinusOne<N extends number> =
 export type GetPlusOne<N extends number> = [...BuildTuple<N>, any]['length'] extends number 
   ? [...BuildTuple<N>, any]['length'] 
   : never;
-
 
 /**
  * Tuple helpers

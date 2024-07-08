@@ -1,6 +1,6 @@
 import * as ts from "typescript"
 
-function extractTypeSignature(filename: string, aliasName: string): string {
+function extractTypeSignature(filename: string, aliasName: string, toString?: boolean ): string {
 
     const program: ts.Program = ts.createProgram([ filename ], { emitDeclarationOnly: true });
     const sourceFile: ts.SourceFile = program.getSourceFile(filename);
@@ -15,9 +15,10 @@ function extractTypeSignature(filename: string, aliasName: string): string {
     }
     const type: ts.Type = typeChecker.getTypeAtLocation(statement);
 
-    return type.value;
+    return toString ? typeChecker.typeToString(type) : (type as any).value;
 }
 
 const typeBSignature = extractTypeSignature("src/index.ts", "History");
+const typeLocationSignature = extractTypeSignature("src/index.ts", "test", true);
 // write to file or console log
 console.log(typeBSignature);
