@@ -1,7 +1,7 @@
-import type { Map } from ".";
-import type { GetMinusOne, GetPlusOne } from "./helper";
-import type { AddMessageToHistory, Location, Player, PlayerCanNavigate, VisitLocation } from "./location"
-import type { ResolveMessages } from "./resolve";
+import type { Map } from "..";
+import type { GetMinusOne, GetPlusOne } from "../helper";
+import type { AddMessageToHistory, Location, Player, PlayerCanNavigate, VisitLocation } from "../location"
+import type { ResolveMessages } from "../resolve";
 
 
 export type GetY<TLocation extends Location> = TLocation[1]

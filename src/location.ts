@@ -1,6 +1,9 @@
-import type { GetRoomAtLocation, GetX, GetXFromPlayer, GetY, GetYFromPlayer } from "./direction";
+import type { GetRoomAtLocation, GetX, GetXFromPlayer, GetY, GetYFromPlayer } from "./handlers/direction";
 
 export type DIRECTION = "north" | "south" | "east" | "west";
+
+export type ACTION = DIRECTION | "inventory"
+
 export type ROOM_TYPE = "room" | "hallway";
 export type RoomName = "bedroom" | "living room" | "kitchen" | "bathroom" | "hallway" 
 export type Room = {
