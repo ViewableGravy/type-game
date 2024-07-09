@@ -1,4 +1,4 @@
-import type { Constants, Print } from "./consts";
+import type { Constants, Printer } from "./print";
 import type { Shift, ShiftUntil, TuplifyUnion } from "./helper";
 import type { Int } from "./helpers/maths";
 import type { DIRECTION, Message, Player, Room } from "./location"
@@ -161,7 +161,7 @@ type ActionConnectorMessage<TRest extends Array<Room | Message>, TIsFirst extend
  */
 export type ResolveHistory<TPlayer extends Player, TFirst extends boolean = true> = 
   ResolveData<TPlayer> extends [] 
-    ? Print.NewGame : 
+    ? Printer.Constant.NewGame : 
   ResolveData<TPlayer> extends [infer First extends Room | Message] 
     ? ResolveLastHistory<TPlayer, First> :
   ResolveData<TPlayer> extends [infer First extends Room | Message, ...infer Rest extends Array<Room | Message>] 
@@ -183,14 +183,11 @@ type ResolveMultiHistory<
   TRest extends Array<Room | Message>
 > =
   `${
-    // If this is the first message, we need to display the starting message
-    StartMessage<TIsFirst>
-  }${
-    // Get the message to display from the data
-    GetMessageFromData<TFirst>  
-  }${
-    // If this is the first message, we need to display the action connector message
-    ActionConnectorMessage<TRest, TIsFirst>
+    Printer.Conditional.ChainResolve<[
+      [TIsFirst, "The player starts in a "],
+      [true, GetMessageFromData<TFirst>],
+      [true, ActionConnectorMessage<TRest, TIsFirst>]
+    ]>
   }${
     // Recursively resolve the history
     ResolveHistory<
