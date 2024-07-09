@@ -26,7 +26,8 @@ type Result = ChainActions<InitializePlayer<[1, 1]>, [
   "north",
   "west",
   "south",
-  "south"
+  "south",
+  "east"
 ]>
 
 type PlayerLocation = Result['_location']

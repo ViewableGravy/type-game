@@ -1,5 +1,5 @@
 import type { Constants, Printer } from "./print";
-import type { Shift, ShiftUntil, TuplifyUnion } from "./helper";
+import type { If, Shift, ShiftUntil, TuplifyUnion } from "./helper";
 import type { Int } from "./helpers/maths";
 import type { DIRECTION, Message, Player, Room } from "./location"
 
@@ -105,20 +105,19 @@ type DirectionToString<TRoom extends Room, TDirection extends DIRECTION> =
 type SomeAreNotEmpty<T extends Array<string>, TCount extends number = 0> =
   T extends [] 
     ? TCount extends 0 ? false : true 
-    : T[0] extends "" 
+    : Printer.IsEmpty<T[0]> extends true
       ? SomeAreNotEmpty<Shift<T>, TCount>
       : TCount extends 0 ? true : false
 
+type WithCommandIfExists<T extends string> = If<Printer.IsEmpty<T>, T, `${T}, `> 
+
 type SimplifyDirections<N extends string, S extends string, E extends string, W extends string> =
-  `${
-    SomeAreNotEmpty<[S, E, W]> extends true ? N extends "" ? "" : `${N}, ` : N
-  }${
-    SomeAreNotEmpty<[E, W]> extends true ? S extends "" ? "" : `${S}, ` : S
-  }${
-    SomeAreNotEmpty<[W]> extends true ? E extends "" ? "" : `${E}, ` : E
-  }${
-    W
-  }`
+  Printer.Condition.ChainResolve<[
+    [SomeAreNotEmpty<[S, E, W]>, WithCommandIfExists<N>],
+    [SomeAreNotEmpty<[E, W]>, WithCommandIfExists<S>],
+    [SomeAreNotEmpty<[W]>, WithCommandIfExists<E>],
+    [true, W]
+  ]>
 
 type DisplayUserNavigationOptions<TRoom extends Room> =
   SimplifyDirections<

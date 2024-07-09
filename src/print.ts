@@ -50,7 +50,13 @@ export namespace Printer {
       T extends [infer First extends ConditionalPrintable, ...infer Rest extends ConditionalPrintable[]]
         ? `${Resolve<First>}${ChainResolve<Rest>}` :
       ""
-  }
+    }
+    
+    /***** GENERAL HELPER FUNCTIONS *****/
+    /**
+     * Returns a boolean representing whether the string is an empty string or not.
+     */
+    export type IsEmpty<T extends string> = T extends "" ? true : false;
 }
 
 export namespace Constants {
