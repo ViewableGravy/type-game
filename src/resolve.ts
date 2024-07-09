@@ -183,7 +183,7 @@ type ResolveMultiHistory<
   TRest extends Array<Room | Message>
 > =
   `${
-    Printer.Conditional.ChainResolve<[
+    Printer.Condition.ChainResolve<[
       [TIsFirst, "The player starts in a "],
       [true, GetMessageFromData<TFirst>],
       [true, ActionConnectorMessage<TRest, TIsFirst>]

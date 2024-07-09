@@ -13,7 +13,7 @@ export namespace Printer {
   /**
    * Namespace for printing text that is conditional.
    */
-  export namespace Conditional {
+  export namespace Condition {
     /**
      * Standard pattern for a ConditionalPrintable where the first value represents
      * whether or not the string should be printed, the second value is the string to print
