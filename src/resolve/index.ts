@@ -1,7 +1,8 @@
-import type { Constants, Printer } from "./print";
-import type { If, Shift, ShiftUntil, TuplifyUnion } from "./helper";
-import type { Int } from "./helpers/maths";
-import type { DIRECTION, Message, Player, Room } from "./location"
+import type { Constants, Printer } from "../print";
+import type { If, Shift, ShiftUntil, TuplifyUnion } from "../helper";
+import type { Int } from "../helpers/maths";
+import type { DIRECTION, Message, Player, Room } from "../location"
+import type { DisplayUserNavigationOptions } from "./available-navigation";
 
 type UnionToCommaSeparated<T extends string> =
   TuplifyUnion<T> extends []
@@ -91,42 +92,6 @@ export type ResolveResponse<TData> =
     ? TData :
   'RESOLVE_RESPONSE_ERROR'
 
-type DirectionToString<TRoom extends Room, TDirection extends DIRECTION> = 
-  TDirection extends 'north'
-    ? TRoom['north'] extends true ? 'north' : "" :
-  TDirection extends 'south'
-    ? TRoom['south'] extends true ? 'south' : "" :
-  TDirection extends 'east'
-    ? TRoom['east'] extends true ? 'east' : "" :
-  TDirection extends 'west'
-    ? TRoom['west'] extends true ? 'west' : "" :
-  never
-
-type SomeAreNotEmpty<T extends Array<string>, TCount extends number = 0> =
-  T extends [] 
-    ? TCount extends 0 ? false : true 
-    : Printer.IsEmpty<T[0]> extends true
-      ? SomeAreNotEmpty<Shift<T>, TCount>
-      : TCount extends 0 ? true : false
-
-type WithCommandIfExists<T extends string> = If<Printer.IsEmpty<T>, T, `${T}, `> 
-
-type SimplifyDirections<N extends string, S extends string, E extends string, W extends string> =
-  Printer.Condition.ChainResolve<[
-    [SomeAreNotEmpty<[S, E, W]>, WithCommandIfExists<N>],
-    [SomeAreNotEmpty<[E, W]>, WithCommandIfExists<S>],
-    [SomeAreNotEmpty<[W]>, WithCommandIfExists<E>],
-    [true, W]
-  ]>
-
-type DisplayUserNavigationOptions<TRoom extends Room> =
-  SimplifyDirections<
-    DirectionToString<TRoom, 'north'>,
-    DirectionToString<TRoom, 'south'>,
-    DirectionToString<TRoom, 'east'>,
-    DirectionToString<TRoom, 'west'>
-  >
-
 
 
 /**
@@ -144,9 +109,11 @@ type ResolveFinalActions<TPlayer extends Player> =
 
 
 type ResolveMessage<TData> = TData extends Message ? ResolveResponse<TData> : "RESOLVE_MESSAGE_ERROR"
-type ResolveRoom<TPlayer extends Player> = ResolveData<TPlayer> extends [infer Single] ? ResolveFinalActions<TPlayer> : "RESOLVE_ROOM_ERROR: More than one room in history"
+type ResolveRoom<TPlayer extends Player> = 
+  ResolveData<TPlayer> extends [infer Single] 
+    ? ResolveFinalActions<TPlayer> 
+    : "RESOLVE_ROOM_ERROR: More than one room in history"
 
-type StartMessage<TFirst extends boolean> = TFirst extends true ? "The player starts in a " : ""
 type ActionConnectorMessage<TRest extends Array<Room | Message>, TIsFirst extends boolean> = 
   TIsFirst extends true 
     ? " before visiting the following rooms:\n-> " :
