@@ -101,12 +101,9 @@ export type ResolveResponse<TData> =
 type ResolveFinalActions<TPlayer extends Player> =
   ResolveData<TPlayer> extends [infer Current]
     ? Current extends Room
-      ? `[Current]\n\nAfter your previous actions, you stand in a ${Current['name']}. You can perform one of the following actions \n - [Navigate]: ${DisplayUserNavigationOptions<Current>}\n - [Action]: Check your inventory ('inventory')` 
+      ? `\n\nAfter your previous actions, you stand in a ${Current['name']}. You can perform one of the following actions \n - [Navigate]: ${DisplayUserNavigationOptions<Current>}\n - [Action]: Check your inventory ('inventory')` 
       : Errors.RESOLVE_POTENTIAL_ACTIONS_ERROR
     : never
-
-
-
 
 type ResolveMessage<TData> = TData extends Message ? ResolveResponse<TData> : Errors.RESOLVE_MESSAGE_ERROR
 type ResolveRoom<TPlayer extends Player> = 
@@ -114,11 +111,17 @@ type ResolveRoom<TPlayer extends Player> =
     ? ResolveFinalActions<TPlayer> 
     : `${Errors.RESOLVE_ROOM_ERROR}: More than one room in history`
 
+
+type IsSecondLast<TRest extends Array<Room | Message>> =
+  TRest extends [infer First] ? true : false
+
 type ActionConnectorMessage<TRest extends Array<Room | Message>, TIsFirst extends boolean> = 
   TIsFirst extends true 
     ? " before visiting the following rooms:\n-> " :
   ShouldShortenHistory<TRest, TIsFirst> extends [true, infer SkippedCount extends number] 
     ? `\n-> (${SkippedCount}) ... \n-> ` :
+  IsSecondLast<TRest> extends true 
+    ? "" :
   "\n-> "
 
 /**
