@@ -1,8 +1,9 @@
 import type { Constants, Printer } from "../print";
-import type { If, Shift, ShiftUntil, TuplifyUnion } from "../helper";
+import type { Shift, ShiftUntil, TuplifyUnion } from "../helper";
 import type { Int } from "../helpers/maths";
 import type { DIRECTION, Message, Player, Room } from "../location"
 import type { DisplayUserNavigationOptions } from "./available-navigation";
+import type { Errors } from "../errors";
 
 type UnionToCommaSeparated<T extends string> =
   TuplifyUnion<T> extends []
@@ -67,9 +68,8 @@ export type GetMessageFromData<First> =
     ? First['name'] :
   First extends Message
     ? ResolveResponse<First> :
-  "GET_MESSAGE_FROM_DATA_ERROR"
+  Errors.GET_MESSAGE_FROM_DATA_ERROR
 
-type DID_NOT_RESOLVE_MESSAGE = "DID_NOT_RESOLVE_MESSAGE"
 
 
 
@@ -87,10 +87,10 @@ export type ResolveResponse<TData> =
       ? ResolveMessages.ResolveInventoryIsEmpty<TData> :
     TData extends ResolveMessages.InventoryContainsItems<Record<string, any>>
       ? ResolveMessages.ResolveInventoryItems<TData> :
-    DID_NOT_RESOLVE_MESSAGE :
+      Errors.DID_NOT_RESOLVE_MESSAGE :
   TData extends Room
     ? TData :
-  'RESOLVE_RESPONSE_ERROR'
+  Errors.RESOLVE_RESPONSE_ERROR
 
 
 
@@ -102,17 +102,17 @@ type ResolveFinalActions<TPlayer extends Player> =
   ResolveData<TPlayer> extends [infer Current]
     ? Current extends Room
       ? `[Current]\n\nAfter your previous actions, you stand in a ${Current['name']}. You can perform one of the following actions \n - [Navigate]: ${DisplayUserNavigationOptions<Current>}\n - [Action]: Check your inventory ('inventory')` 
-      : "RESOLVE_POTENTIAL_ACTIONS_ERROR"
+      : Errors.RESOLVE_POTENTIAL_ACTIONS_ERROR
     : never
 
 
 
 
-type ResolveMessage<TData> = TData extends Message ? ResolveResponse<TData> : "RESOLVE_MESSAGE_ERROR"
+type ResolveMessage<TData> = TData extends Message ? ResolveResponse<TData> : Errors.RESOLVE_MESSAGE_ERROR
 type ResolveRoom<TPlayer extends Player> = 
   ResolveData<TPlayer> extends [infer Single] 
     ? ResolveFinalActions<TPlayer> 
-    : "RESOLVE_ROOM_ERROR: More than one room in history"
+    : `${Errors.RESOLVE_ROOM_ERROR}: More than one room in history`
 
 type ActionConnectorMessage<TRest extends Array<Room | Message>, TIsFirst extends boolean> = 
   TIsFirst extends true 
