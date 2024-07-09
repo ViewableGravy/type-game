@@ -1,5 +1,5 @@
 import type { Constants, Print } from "./consts";
-import type { BuildTuple, GetPlusOne, Shift, TuplifyUnion } from "./helper";
+import type { BuildTuple, GetPlusOne, Shift, ShiftUntil, TuplifyUnion } from "./helper";
 import type { DIRECTION, Message, Player, Room } from "./location"
 
 type UnionToCommaSeparated<T extends string> =
@@ -154,14 +154,6 @@ type ActionConnectorMessage<TRest extends Array<Room | Message>, TIsFirst extend
     ? `\n-> (${SkippedCount}) ... \n-> ` :
   "\n-> "
 
-
-
-
-export type ShiftUntil<T extends any[], N extends number> = 
-  T['length'] extends N 
-    ? T : 
-    ShiftUntil<Shift<T>, N>;
-
 /**
  * Takes the player object and converts the _data attribute (history) into a summary of the players actions
  * as well as providing the user with a list of potential actions they can take
@@ -172,23 +164,8 @@ export type ResolveHistory<TPlayer extends Player, TFirst extends boolean = true
   ResolveData<TPlayer> extends [infer First extends Room | Message] 
     ? ResolveLastHistory<TPlayer, First> :
   ResolveData<TPlayer> extends [infer First extends Room | Message, ...infer Rest extends Array<Room | Message>] 
-    ? ResolveMultiHistory<TPlayer, TFirst, First, Rest>
-    // `${StartMessage<TFirst>}${GetMessageFromData<First>} ${ActionConnectorMessage<TFirst>} ${
-    //     ResolveHistory<
-    //       Player<
-    //         Rest extends Array<Room | Message> 
-    //           ? TFirst extends true 
-    //             ? ShiftUntil<Rest, 4> 
-    //             : Rest
-    //           : never, 
-    //         TPlayer['_location'], 
-    //         TPlayer['_inventory'], 
-    //         TPlayer['_visited']
-    //       >,
-    //       false
-    //     >
-    //   }`
-    : never
+    ? ResolveMultiHistory<TPlayer, TFirst, First, Rest> :
+  never
 
 type ResolveLastHistory<
   TPlayer extends Player,
@@ -218,10 +195,9 @@ type ResolveMultiHistory<
     ResolveHistory<
       Player<
         TRest extends Array<Room | Message> 
-          // ? TIsFirst extends true 
-          //   ? ShiftUntil<TRest, 4> 
-          //   : TRest
-          ? ShouldShortenHistory<TRest, TIsFirst> extends [true, infer _] ? ShiftUntil<TRest, 4> : TRest
+          ? ShouldShortenHistory<TRest, TIsFirst> extends [true, infer _] 
+            ? ShiftUntil<TRest, 4> 
+            : TRest
           : never, 
         TPlayer['_location'], 
         TPlayer['_inventory'], 
@@ -230,7 +206,6 @@ type ResolveMultiHistory<
       false
     >  
   }`
-
 
 /**
  * Note, similar to other functions relating to math, cannot exceed 999

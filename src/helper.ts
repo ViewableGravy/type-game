@@ -23,6 +23,10 @@ export type Every<T extends Array<any>, TType> =
     : T[0] extends TType 
       ? Every<Shift<T>, TType>
       : false
+export type ShiftUntil<T extends any[], N extends number> = 
+  T['length'] extends N 
+    ? T : 
+  ShiftUntil<Shift<T>, N>;
 
 
 export type Chunk<
