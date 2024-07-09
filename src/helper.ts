@@ -1,16 +1,24 @@
+/***************************************************************************************
+ * TYPE HELPERS
+ **************************************************************************************/
+export type ValueOf<T> = T[keyof T];
 
-/** Boolean Helpers */
+/***************************************************************************************
+ * BOOLEAN HELPERS
+ **************************************************************************************/
 export type Not<T extends boolean> = T extends true ? false : true;
 export type If<T extends boolean, Then, Else> = T extends true ? Then : Else;
+export type Switch<T extends any, Cases extends Array<{ [K in any]: any }>> = 
+  T extends keyof Cases[0]
+    ? ValueOf<Cases[0]>:
+  Switch<T, Shift<Cases>>;
 
-/**** ARRAY HELPERS ****/
-export type HasIndex<TIndex extends number, TArray extends any[]> = 
-  TArray extends Record<TIndex, any> 
-    ? true 
-    : false
-
+/***************************************************************************************
+ * ARRAY HELPERS
+ **************************************************************************************/
 export type Pop<T extends Array<any>> = T extends [...infer Rest, infer Last] ? Rest : never;
 export type Shift<T extends Array<any>> = T extends [infer First, ...infer Rest] ? Rest : never;
+export type Push<T extends any[], V> = [...T, V];
 export type Some<T extends Array<any>, TType> =
   T extends [] 
     ? false 
@@ -24,10 +32,7 @@ export type Every<T extends Array<any>, TType> =
       ? Every<Shift<T>, TType>
       : false
 export type ShiftUntil<T extends any[], N extends number> = 
-  T['length'] extends N 
-    ? T : 
-  ShiftUntil<Shift<T>, N>;
-
+  Length<T> extends N ? T : ShiftUntil<Shift<T>, N>;
 
 export type Chunk<
   TOriginal extends Array<any>, 
@@ -38,7 +43,7 @@ export type Chunk<
     ? [TLeftChunk, ...Chunk<TOriginal, TChunkSize>] :
   TOriginal extends [infer F, ...infer CurrentRight] 
     ? Chunk<CurrentRight, TChunkSize, [...TLeftChunk, F]> :
-  TLeftChunk['length'] extends 0
+  Length<TLeftChunk> extends 0
     ? TLeftChunk
     : [TLeftChunk];
 
@@ -52,37 +57,31 @@ export type HasPreviousIndex<TIndex extends number, TArray extends any[]> =
     ? false 
     : HasIndex<TIndex, TArray>
 
-/***** NUMBER HELPERS *****/
-export type BuildTuple<L extends number, T extends any[] = []> = 
-  T['length'] extends L 
-    ? T 
-    : BuildTuple<L, [any, ...T]>;
+export type HasIndex<TIndex extends number, TArray extends any[]> = 
+  TArray extends Record<TIndex, any> 
+    ? true 
+    : false
 
-export type BuildIndexedTuple<TLength extends number, TIndex extends number[] = []> =
-  TIndex['length'] extends TLength
-    ? TIndex
-    : BuildIndexedTuple<TLength, [...TIndex, GetPlusOne<TIndex['length']>]>
-
-export type GetMinusOne<N extends number> = 
-  BuildTuple<N> extends [any, ...infer Rest] 
-    ? Rest['length'] 
-    : N;
-    
-export type GetPlusOne<N extends number> = [...BuildTuple<N>, any]['length'] extends number 
-  ? [...BuildTuple<N>, any]['length'] 
-  : never;
+/***************************************************************************************
+ * TUPLE HELPERS
+ **************************************************************************************/
+export type Length<T extends any[]> = T extends { length: infer L extends number } ? L : never;
+export type UnionToCommaSeparated<T extends string> =
+  TuplifyUnion<T> extends []
+    ? "" :
+  TuplifyUnion<T> extends [infer First]
+    ? First extends string ? `${First}` : never :
+  TuplifyUnion<T> extends [infer First, ...infer Rest]
+    ? First extends string ? `${First}, ${UnionToCommaSeparated<Rest[number] extends string ? Rest[number] : never>}` : never :
+  never
 
 /**
- * Tuple helpers
+ * OTHER
  */
-
 type UnionToIntersection<U> =
   (U extends any ? (k: U) => void : never) extends ((k: infer I) => void) ? I : never
 type LastOf<T> =
   UnionToIntersection<T extends any ? () => T : never> extends () => (infer R) ? R : never
-
-// TS4.0+
-type Push<T extends any[], V> = [...T, V];
 
 // TS4.1+
 export type TuplifyUnion<T, L = LastOf<T>, N = [T] extends [never] ? true : false> =

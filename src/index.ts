@@ -1,5 +1,4 @@
 import type { ChainActions } from "./handlers/action";
-import type { BuildTuple, Chunk } from "./helper";
 import type { Location, Player, Room } from "./location";
 import type { ResolveHistory } from "./resolve";
 import type { Hallway } from "./rooms/hallway";

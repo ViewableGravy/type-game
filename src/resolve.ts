@@ -1,5 +1,6 @@
 import type { Constants, Print } from "./consts";
-import type { BuildTuple, GetPlusOne, Shift, ShiftUntil, TuplifyUnion } from "./helper";
+import type { Shift, ShiftUntil, TuplifyUnion } from "./helper";
+import type { Int } from "./helpers/maths";
 import type { DIRECTION, Message, Player, Room } from "./location"
 
 type UnionToCommaSeparated<T extends string> =
@@ -219,4 +220,4 @@ type ShouldShortenHistory<TData extends Array<Room | Message>, TIsFirst extends 
     ? [false, TAmount] :
   TData['length'] extends Constants.DisplayableHistoryPlusOne // should shorten if more than 
     ? [true, TAmount] : 
-  ShouldShortenHistory<Shift<TData>, TIsFirst, GetPlusOne<TAmount>> // recursively check if we should shorten
+  ShouldShortenHistory<Shift<TData>, TIsFirst, Int.Add<TAmount, 1>> // recursively check if we should shorten

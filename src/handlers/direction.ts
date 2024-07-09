@@ -1,5 +1,5 @@
 import type { Map } from "..";
-import type { GetMinusOne, GetPlusOne } from "../helper";
+import type { Int } from "../helpers/maths";
 import type { AddMessageToHistory, DIRECTION, Location, Player, PlayerCanNavigate, VisitLocation } from "../location"
 import type { ResolveMessages } from "../resolve";
 
@@ -17,28 +17,28 @@ type HandleNorth<TPlayer extends Player> =
     ? AddMessageToHistory<TPlayer, ResolveMessages.NoPathPresent<"north">>
     : GetYFromPlayer<TPlayer> extends 0
       ? AddMessageToHistory<TPlayer, ResolveMessages.MapBoundaryPreventsNavigation<"north">>
-      : VisitLocation<TPlayer, [GetXFromPlayer<TPlayer>, GetMinusOne<GetYFromPlayer<TPlayer>>]>
+      : VisitLocation<TPlayer, [GetXFromPlayer<TPlayer>, Int.Sub<GetYFromPlayer<TPlayer>, 1>]>
 
 type HandleSouth<TPlayer extends Player> =
   PlayerCanNavigate<TPlayer, "south"> extends false 
     ? AddMessageToHistory<TPlayer, ResolveMessages.NoPathPresent<"south">>
-    : GetYFromPlayer<TPlayer> extends GetMinusOne<Map['length']>
+    : GetYFromPlayer<TPlayer> extends Int.Sub<Map['length'], 1>
       ? AddMessageToHistory<TPlayer, ResolveMessages.MapBoundaryPreventsNavigation<"south">>
-      : VisitLocation<TPlayer, [GetXFromPlayer<TPlayer>, GetPlusOne<GetYFromPlayer<TPlayer>>]>
+      : VisitLocation<TPlayer, [GetXFromPlayer<TPlayer>, Int.Add<GetYFromPlayer<TPlayer>, 1>]>
 
 type HandleEast<TPlayer extends Player> =
   PlayerCanNavigate<TPlayer, "east"> extends false 
     ? AddMessageToHistory<TPlayer, ResolveMessages.NoPathPresent<"east">>
-    : GetXFromPlayer<TPlayer> extends GetMinusOne<Map[0]['length']>
+    : GetXFromPlayer<TPlayer> extends Int.Sub<Map[0]['length'], 1>
       ? AddMessageToHistory<TPlayer, ResolveMessages.MapBoundaryPreventsNavigation<"east">>
-      : VisitLocation<TPlayer, [GetPlusOne<GetXFromPlayer<TPlayer>>, GetYFromPlayer<TPlayer>]>
+      : VisitLocation<TPlayer, [Int.Add<GetXFromPlayer<TPlayer>, 1>, GetYFromPlayer<TPlayer>]>
 
 type HandleWest<TPlayer extends Player> =
   PlayerCanNavigate<TPlayer, "west"> extends false 
     ? AddMessageToHistory<TPlayer, ResolveMessages.NoPathPresent<"west">>
     : GetXFromPlayer<TPlayer> extends 0
       ? AddMessageToHistory<TPlayer, ResolveMessages.MapBoundaryPreventsNavigation<"west">>
-      : VisitLocation<TPlayer, [GetMinusOne<GetXFromPlayer<TPlayer>>, GetYFromPlayer<TPlayer>]>
+      : VisitLocation<TPlayer, [Int.Sub<GetXFromPlayer<TPlayer>, 1>, GetYFromPlayer<TPlayer>]>
 
 export type Navigate<TPlayer extends Player, TDirection extends DIRECTION> = 
   TDirection extends "north" ? HandleNorth<TPlayer> :
