@@ -19,6 +19,7 @@ function extractTypeSignature(filename: string, aliasName: string, toString?: bo
 }
 
 const typeBSignature = extractTypeSignature("src/index.ts", "History");
-const typeLocationSignature = extractTypeSignature("src/index.ts", "test", true);
+// const typeLocationSignature = extractTypeSignature("src/index.ts", "Combined", true);
 // write to file or console log
 console.log(typeBSignature);
+// console.log(typeLocationSignature)

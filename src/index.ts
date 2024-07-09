@@ -1,4 +1,5 @@
 import type { ChainActions } from "./handlers/action";
+import type { BuildTuple, Chunk } from "./helper";
 import type { Location, Player, Room } from "./location";
 import type { ResolveHistory } from "./resolve";
 import type { Hallway } from "./rooms/hallway";
@@ -32,7 +33,4 @@ type Result = ChainActions<InitializePlayer<[1, 1]>, [
 type PlayerLocation = Result['_location']
 type Visited = Result['_visited']
 type History = ResolveHistory<Result>
-
-
-type test = keyof Visited
-
+    

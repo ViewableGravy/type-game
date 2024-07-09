@@ -1,4 +1,5 @@
-import type { GetPlusOne, Shift, TuplifyUnion } from "./helper";
+import type { Constants, Print } from "./consts";
+import type { BuildTuple, GetPlusOne, Shift, TuplifyUnion } from "./helper";
 import type { DIRECTION, Message, Player, Room } from "./location"
 
 type UnionToCommaSeparated<T extends string> =
@@ -135,7 +136,7 @@ type DisplayUserNavigationOptions<TRoom extends Room> =
 type ResolveFinalActions<TPlayer extends Player> =
   ResolveData<TPlayer> extends [infer Current]
     ? Current extends Room
-      ? `[Current]\n\nAfter your previous actions, you stand in a ${Current['name']}. You can perform the following actions \n - [Navigate]: ${DisplayUserNavigationOptions<Current>}\n - [Action]: Check your inventory ('inventory')` 
+      ? `[Current]\n\nAfter your previous actions, you stand in a ${Current['name']}. You can perform one of the following actions \n - [Navigate]: ${DisplayUserNavigationOptions<Current>}\n - [Action]: Check your inventory ('inventory')` 
       : "RESOLVE_POTENTIAL_ACTIONS_ERROR"
     : never
 
@@ -146,14 +147,20 @@ type ResolveMessage<TData> = TData extends Message ? ResolveResponse<TData> : "R
 type ResolveRoom<TPlayer extends Player> = ResolveData<TPlayer> extends [infer Single] ? ResolveFinalActions<TPlayer> : "RESOLVE_ROOM_ERROR: More than one room in history"
 
 type StartMessage<TFirst extends boolean> = TFirst extends true ? "The player starts in a " : ""
-type ActionConnectorMessage<TFirst extends boolean> = TFirst extends true ? "Before taking the following actions:" : "\n->"
+type ActionConnectorMessage<TRest extends Array<Room | Message>, TIsFirst extends boolean> = 
+  TIsFirst extends true 
+    ? " before visiting the following rooms:\n-> " :
+  ShouldShortenHistory<TRest, TIsFirst> extends [true, infer SkippedCount extends number] 
+    ? `\n-> (${SkippedCount}) ... \n-> ` :
+  "\n-> "
 
 
 
 
-
-
-
+export type ShiftUntil<T extends any[], N extends number> = 
+  T['length'] extends N 
+    ? T : 
+    ShiftUntil<Shift<T>, N>;
 
 /**
  * Takes the player object and converts the _data attribute (history) into a summary of the players actions
@@ -161,22 +168,80 @@ type ActionConnectorMessage<TFirst extends boolean> = TFirst extends true ? "Bef
  */
 export type ResolveHistory<TPlayer extends Player, TFirst extends boolean = true> = 
   ResolveData<TPlayer> extends [] 
-    ? "Game Not started" : 
-  ResolveData<TPlayer> extends [infer First] 
-    ? ResolveResponse<First> extends Message
-      ? ResolveMessage<First> 
-      : ResolveRoom<TPlayer> :
-  ResolveData<TPlayer> extends [infer First, ...infer Rest] 
-    ? `${StartMessage<TFirst>}${GetMessageFromData<First>} ${ActionConnectorMessage<TFirst>} ${
-        ResolveHistory<
-          Player<
-            Rest extends Array<Room | Message> ? Rest : never, 
-            TPlayer['_location'], 
-            TPlayer['_inventory'], 
-            TPlayer['_visited']
-          >,
-          false
-        >
-      }`
+    ? Print.NewGame : 
+  ResolveData<TPlayer> extends [infer First extends Room | Message] 
+    ? ResolveLastHistory<TPlayer, First> :
+  ResolveData<TPlayer> extends [infer First extends Room | Message, ...infer Rest extends Array<Room | Message>] 
+    ? ResolveMultiHistory<TPlayer, TFirst, First, Rest>
+    // `${StartMessage<TFirst>}${GetMessageFromData<First>} ${ActionConnectorMessage<TFirst>} ${
+    //     ResolveHistory<
+    //       Player<
+    //         Rest extends Array<Room | Message> 
+    //           ? TFirst extends true 
+    //             ? ShiftUntil<Rest, 4> 
+    //             : Rest
+    //           : never, 
+    //         TPlayer['_location'], 
+    //         TPlayer['_inventory'], 
+    //         TPlayer['_visited']
+    //       >,
+    //       false
+    //     >
+    //   }`
     : never
 
+type ResolveLastHistory<
+  TPlayer extends Player,
+  TFirst extends Room | Message
+> =
+  ResolveResponse<TFirst> extends Message
+    ? ResolveMessage<TFirst> 
+    : ResolveRoom<TPlayer>
+
+type ResolveMultiHistory<
+  TPlayer extends Player,
+  TIsFirst extends boolean,
+  TFirst extends Room | Message,
+  TRest extends Array<Room | Message>
+> =
+  `${
+    // If this is the first message, we need to display the starting message
+    StartMessage<TIsFirst>
+  }${
+    // Get the message to display from the data
+    GetMessageFromData<TFirst>  
+  }${
+    // If this is the first message, we need to display the action connector message
+    ActionConnectorMessage<TRest, TIsFirst>
+  }${
+    // Recursively resolve the history
+    ResolveHistory<
+      Player<
+        TRest extends Array<Room | Message> 
+          // ? TIsFirst extends true 
+          //   ? ShiftUntil<TRest, 4> 
+          //   : TRest
+          ? ShouldShortenHistory<TRest, TIsFirst> extends [true, infer _] ? ShiftUntil<TRest, 4> : TRest
+          : never, 
+        TPlayer['_location'], 
+        TPlayer['_inventory'], 
+        TPlayer['_visited']
+      >,
+      false
+    >  
+  }`
+
+
+/**
+ * Note, similar to other functions relating to math, cannot exceed 999
+ */
+type ShouldShortenHistory<TData extends Array<Room | Message>, TIsFirst extends boolean, TAmount extends number = 0> = 
+  TIsFirst extends true 
+    ? [false, TAmount] :
+  TData['length'] extends 1 | 0 // handle less than displayable
+    ? [false, TAmount] :
+  TData['length'] extends Constants.DisplayableHistory // do not shorten if it is displable
+    ? [false, TAmount] :
+  TData['length'] extends Constants.DisplayableHistoryPlusOne // should shorten if more than 
+    ? [true, TAmount] : 
+  ShouldShortenHistory<Shift<TData>, TIsFirst, GetPlusOne<TAmount>> // recursively check if we should shorten

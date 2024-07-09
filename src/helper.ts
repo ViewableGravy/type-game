@@ -24,6 +24,20 @@ export type Every<T extends Array<any>, TType> =
       ? Every<Shift<T>, TType>
       : false
 
+
+export type Chunk<
+  TOriginal extends Array<any>, 
+  TChunkSize extends number, 
+  TLeftChunk extends Array<any> = []
+> =
+  TChunkSize extends TLeftChunk['length'] 
+    ? [TLeftChunk, ...Chunk<TOriginal, TChunkSize>] :
+  TOriginal extends [infer F, ...infer CurrentRight] 
+    ? Chunk<CurrentRight, TChunkSize, [...TLeftChunk, F]> :
+  TLeftChunk['length'] extends 0
+    ? TLeftChunk
+    : [TLeftChunk];
+
 export type HasNextIndex<TIndex extends number, TArray extends any[]> = 
   TArray['length'] extends TIndex 
     ? true 
@@ -39,6 +53,11 @@ export type BuildTuple<L extends number, T extends any[] = []> =
   T['length'] extends L 
     ? T 
     : BuildTuple<L, [any, ...T]>;
+
+export type BuildIndexedTuple<TLength extends number, TIndex extends number[] = []> =
+  TIndex['length'] extends TLength
+    ? TIndex
+    : BuildIndexedTuple<TLength, [...TIndex, GetPlusOne<TIndex['length']>]>
 
 export type GetMinusOne<N extends number> = 
   BuildTuple<N> extends [any, ...infer Rest] 
