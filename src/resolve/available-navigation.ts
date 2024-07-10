@@ -1,6 +1,6 @@
 /***** IMPORTS *****/
 import type { If, Shift } from "../helper"
-import type { DIRECTION, Room } from "../location"
+import type { DIRECTION, Room } from "../player"
 import type { Printer } from "../print"
 
 type DirectionToString<TRoom extends Room, TDirection extends DIRECTION> = 

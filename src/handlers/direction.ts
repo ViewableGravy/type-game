@@ -1,6 +1,6 @@
-import type { Map } from "..";
+import type { MapInstance } from "..";
 import type { Int } from "../helpers/maths";
-import type { Player, DIRECTION, Location } from "../location"
+import type { Player, DIRECTION, Location } from "../player"
 import type { ResolveMessages } from "../resolve";
 
 
@@ -10,7 +10,7 @@ export type GetX<TLocation extends Location> = TLocation[0]
 export type GetYFromPlayer<TPlayer extends Player> = GetY<TPlayer["_location"]>
 export type GetXFromPlayer<TPlayer extends Player> = GetX<TPlayer["_location"]>
 
-export type GetRoomAtLocation<TLocation extends Location> = Map[GetY<TLocation>][GetX<TLocation>]
+export type GetRoomAtLocation<TLocation extends Location> = MapInstance[GetY<TLocation>][GetX<TLocation>]
 
 type HandleNorth<TPlayer extends Player> =
   Player.Navigate.Can<TPlayer, "north"> extends false 
@@ -25,7 +25,7 @@ type HandleNorth<TPlayer extends Player> =
 type HandleSouth<TPlayer extends Player> =
   Player.Navigate.Can<TPlayer, "south"> extends false 
     ? Player.History.PushMessage<TPlayer, ResolveMessages.NoPathPresent<"south">> : 
-  GetYFromPlayer<TPlayer> extends Int.Sub<Map['length'], 1>
+  GetYFromPlayer<TPlayer> extends Int.Sub<MapInstance['length'], 1>
     ? Player.History.PushMessage<TPlayer, ResolveMessages.MapBoundaryPreventsNavigation<"south">> : 
   Player.History.Visit<TPlayer, [
     GetXFromPlayer<TPlayer>, 
@@ -35,7 +35,7 @@ type HandleSouth<TPlayer extends Player> =
 type HandleEast<TPlayer extends Player> =
   Player.Navigate.Can<TPlayer, "east"> extends false 
     ? Player.History.PushMessage<TPlayer, ResolveMessages.NoPathPresent<"east">> : 
-  GetXFromPlayer<TPlayer> extends Int.Sub<Map[0]['length'], 1>
+  GetXFromPlayer<TPlayer> extends Int.Sub<MapInstance[0]['length'], 1>
     ? Player.History.PushMessage<TPlayer, ResolveMessages.MapBoundaryPreventsNavigation<"east">> : 
   Player.History.Visit<TPlayer, [
     Int.Add<GetXFromPlayer<TPlayer>, 1>, 

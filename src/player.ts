@@ -1,4 +1,5 @@
 import type { GetRoomAtLocation, GetX, GetXFromPlayer, GetY, GetYFromPlayer } from "./handlers/direction";
+import type { _Action, _ChainActions } from "./handlers/action";
 
 export type DIRECTION = "north" | "south" | "east" | "west";
 
@@ -29,7 +30,7 @@ export type Player<
   TInventory extends Record<string, any> = {},
   TVisited extends Record<`${number},${number}`, boolean> = {}
 > = {
-  _data: TRoomHistory;
+  history: TRoomHistory;
   _location: TLocation;
   _inventory: TInventory;
   _visited: TVisited;
@@ -41,11 +42,19 @@ export namespace Player {
    * Clones a player object that can then be used to reduce or manipulate without affecting the original player object
    */
   export type Clone<TPlayer extends Player> = Player<
-    TPlayer["_data"],
+    TPlayer["history"],
     TPlayer["_location"],
     TPlayer["_inventory"],
     TPlayer["_visited"]
   > 
+
+  /**
+   * PUBLIC METHODS
+   */
+  export type GetHistory<TPlayer extends Player> = TPlayer["history"]
+  export type GetLocation<TPlayer extends Player> = TPlayer["_location"]
+  export type GetInventory<TPlayer extends Player> = TPlayer["_inventory"]
+  export type GetVisited<TPlayer extends Player> = TPlayer["_visited"]
 
   /**
    * Functionality relating to the players history
@@ -59,7 +68,7 @@ export namespace Player {
       TPlayer extends Player, 
       TLocation extends Location
     > = Player<
-      [...TPlayer["_data"], GetRoomAtLocation<TLocation>],
+      [...TPlayer["history"], GetRoomAtLocation<TLocation>],
       TLocation,
       TPlayer["_inventory"],
       TPlayer["_visited"] & { 
@@ -75,7 +84,7 @@ export namespace Player {
       TPlayer extends Player, 
       TMessage extends Message
     > = Player<
-      [...TPlayer["_data"], TMessage],
+      [...TPlayer["history"], TMessage],
       TPlayer["_location"],
       TPlayer["_inventory"],
       TPlayer["_visited"]

@@ -1,4 +1,4 @@
-import type { Player } from "../location"
+import type { Player } from "../player"
 import type { ResolveMessages } from "../resolve"
 
 type HasAtLeastOneKey<T> = keyof T extends never ? false : true;

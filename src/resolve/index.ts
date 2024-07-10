@@ -1,7 +1,7 @@
 import type { Constants, Printer } from "../print";
 import type { Shift, ShiftUntil, TuplifyUnion } from "../helper";
 import type { Int } from "../helpers/maths";
-import type { DIRECTION, Message, Player, Room } from "../location"
+import type { DIRECTION, Message, Player, Room } from "../player"
 import type { DisplayUserNavigationOptions } from "./available-navigation";
 import type { Errors } from "../errors";
 
@@ -61,8 +61,7 @@ export namespace ResolveMessages {
 }
 
 
-export type ResolveData<TPlayer extends Player> = TPlayer['_data']
-export type ResolveRoomName<TPlayer extends Player> = ResolveData<TPlayer>['name']
+export type ResolveRoomName<TPlayer extends Player> = Player.GetHistory<TPlayer>['name']
 export type GetMessageFromData<First> = 
   First extends Room 
     ? First['name'] :
@@ -99,7 +98,7 @@ export type ResolveResponse<TData> =
  * of potential actions they can take
  */
 type ResolveFinalActions<TPlayer extends Player> =
-  ResolveData<TPlayer> extends [infer Current]
+  Player.GetHistory<TPlayer> extends [infer Current]
     ? Current extends Room
       ? `\n\nAfter your previous actions, you stand in a ${Current['name']}. You can perform one of the following actions \n - [Navigate]: ${DisplayUserNavigationOptions<Current>}\n - [Action]: Check your inventory ('inventory')` 
       : Errors.RESOLVE_POTENTIAL_ACTIONS_ERROR
@@ -107,7 +106,7 @@ type ResolveFinalActions<TPlayer extends Player> =
 
 type ResolveMessage<TData> = TData extends Message ? ResolveResponse<TData> : Errors.RESOLVE_MESSAGE_ERROR
 type ResolveRoom<TPlayer extends Player> = 
-  ResolveData<TPlayer> extends [infer Single] 
+  Player.GetHistory<TPlayer> extends [infer Single] 
     ? ResolveFinalActions<TPlayer> 
     : `${Errors.RESOLVE_ROOM_ERROR}: More than one room in history`
 
@@ -129,11 +128,11 @@ type ActionConnectorMessage<TRest extends Array<Room | Message>, TIsFirst extend
  * as well as providing the user with a list of potential actions they can take
  */
 export type ResolveHistory<TPlayer extends Player, TFirst extends boolean = true> = 
-  ResolveData<TPlayer> extends [] 
+  Player.GetHistory<TPlayer> extends [] 
     ? Printer.Constant.NewGame : 
-  ResolveData<TPlayer> extends [infer First extends Room | Message] 
+  Player.GetHistory<TPlayer> extends [infer First extends Room | Message] 
     ? ResolveLastHistory<TPlayer, First> :
-  ResolveData<TPlayer> extends [infer First extends Room | Message, ...infer Rest extends Array<Room | Message>] 
+  Player.GetHistory<TPlayer> extends [infer First extends Room | Message, ...infer Rest extends Array<Room | Message>] 
     ? ResolveMultiHistory<TPlayer, TFirst, First, Rest> :
   never
 
