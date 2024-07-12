@@ -1,9 +1,9 @@
 /***** HALLWAY *****/
 export type HallwayProps<
-  N extends boolean | undefined = undefined, 
-  S extends boolean | undefined = undefined, 
-  E extends boolean | undefined = undefined, 
-  W extends boolean | undefined = undefined
+  N extends boolean = false, 
+  S extends boolean = false, 
+  E extends boolean = false, 
+  W extends boolean = false
 > = {
   north?: N;
   south?: S;
@@ -12,18 +12,18 @@ export type HallwayProps<
 };
 
 export type Hallway<
-  N extends boolean | undefined = undefined, 
-  S extends boolean | undefined = undefined, 
-  E extends boolean | undefined = undefined, 
-  W extends boolean | undefined = undefined,
+  N extends boolean = false, 
+  S extends boolean = false, 
+  E extends boolean = false, 
+  W extends boolean = false,
   _ID extends string = "default"
 > = {
   type: "hallway";
   name: "hallway";
-  north: N extends undefined | false ? false : true;
-  south: S extends undefined | false ? false : true;
-  east: E extends undefined | false ? false : true;
-  west: W extends undefined | false ? false : true;
+  north: N;
+  south: S;
+  east: E;
+  west: W;
 
   /**
    * Identifier used for troubleshooting

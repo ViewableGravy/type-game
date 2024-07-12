@@ -1,19 +1,37 @@
-import type { Shift } from "../helper";
-import type { ACTION, DIRECTION, Player } from "../player";
-import type { Navigate } from "./direction";
+import type { Player } from "../entities/player";
+import type { Shift } from "../utilities/common";
+import type { ACTION, DIRECTION } from "../_player";
+import type { NavigatePlayer } from "../interactions/navigation/direction";
 import type { HandleInventory } from "./inventory";
+import type { Game } from "../game";
 
-export type _Action<TPlayer extends Player, TAction extends ACTION> =
-  TAction extends DIRECTION 
-    ? Navigate<TPlayer, TAction> : 
-  TAction extends "inventory" 
-    ? HandleInventory<TPlayer> :
-  TPlayer
+type Props<TAction = ACTION> = {
+  game: Game,
+  player: Player,
+  action: TAction
+}
 
-export type _ChainActions<TPlayer extends Player, TActions extends Array<ACTION>> =
-  TActions extends []
-    ? TPlayer
-    : _ChainActions<
-        _Action<TPlayer, TActions[0]>,
-        Shift<TActions>
-      >
+type CastToNavigateProps<T extends Props> =
+  T['action'] extends DIRECTION
+    ? Omit<T, 'action'> & { direction: T['action'] }
+    : never
+
+export type _Action<T extends Props> =
+  T['action'] extends DIRECTION 
+    ? NavigatePlayer<CastToNavigateProps<T>> : 
+  T['action'] extends "inventory" 
+    ? HandleInventory<T['player']> :
+  T['player']
+
+export type _ChainActions<T extends Props<Array<ACTION>>> =
+  T['action'] extends []
+    ? T['player']
+    : _ChainActions<{
+        game: T['game'],
+        action: Shift<T['action']>,
+        player: _Action<{
+          game: T['game'],
+          player: T['player'],
+          action: T['action'][0]
+        }>
+    }>

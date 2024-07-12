@@ -1,25 +1,23 @@
+import type { Player, Player } from "./entities/player";
 import type { Game } from "./game";
-import type { _ChainActions } from "./handlers/action";
-import type { Location, Player, Room } from "./player";
-import type { ResolveHistory } from "./resolve";
-import type { Hallway } from "./rooms/hallway";
+import type { _Action, _ChainActions } from "./handlers/action";
+import type { Location, Room } from "./_player";
+import type { ResolveHistory } from "./_resolve";
+import type { MapInstance } from "./maps/floor1";
+import type { GetRoomAtLocation, GetXFromEntity } from "./interactions/navigation/direction";
 
-export type CreateMap<TMap extends Array<Array<Room>>> = TMap
+type VerifyStartLocation<N extends Location> = MapInstance[N[1]][N[0]] extends Room ? MapInstance[N[1]][N[0]] : never
 
-type Bedroom = { name: "bedroom", type: "room", north: true, south: false, east: false, west: false }
-
-type InitializePlayer<N extends Location> = Player<[MapInstance[N[1]][N[0]]], N, { pickles: 1, cheese: 1, bacon: 1 }, { [Key in `${N[0]},${N[0]}`]: true }>
+type InitializePlayer<N extends Location> = Player<{
+  history: [VerifyStartLocation<N>], 
+  location: N, 
+  inventory: { pickles: 1, cheese: 1, bacon: 1 },
+  visited: { [Key in `${N[0]},${N[0]}`]: true }
+}>
 
 /**
  * SETUP
  */
-
-export type MapInstance = CreateMap<[
-  [Hallway<false, false, true, false>, Hallway<false, true, true, true>, Hallway<false, true, false, true>],
-  [Hallway<true, false, false, false>, Hallway<true, true, false, false>, Bedroom],
-  [Hallway<false, false, true, false>, Hallway<false, false, true, true>, Hallway<false, false, true, true>],
-]>;
-
 export type PlayerInstance = InitializePlayer<[1, 1]>
 
 export type GameInstance = Game.Create<{
@@ -28,21 +26,19 @@ export type GameInstance = Game.Create<{
 }>
 
 type ResultingGameState = Game.Action.ChainPlayerActions<GameInstance, [
-  "north",
+  "south",
   "east",
-  "south",
-  "inventory",
+  "east",
   "north",
-  "inventory",
-  "south",
-  "north",
-  "west",
-  "south",
-  "south",
-  "east"
 ]>
 
-type PlayerLocation = Game.GetPlayer<ResultingGameState>['_location']
-type Visited = Game.GetPlayer<ResultingGameState>['_visited']
+type PlayerLocation = Game.GetPlayer<ResultingGameState>['position']
+type Visited = Game.GetPlayer<ResultingGameState>['visited']
 type History = ResolveHistory<Game.GetPlayer<ResultingGameState>>
-    
+type player = Game.GetPlayer<ResultingGameState>
+
+
+type room = GetRoomAtLocation<[
+  GetXFromEntity<player>, 
+  GetXFromEntity<player>
+]>
