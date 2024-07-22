@@ -1,4 +1,4 @@
-import type { _Action, _ChainActions } from "./handlers/action"
+import type { _PlayerAction, _ChainPlayerActions } from "./handlers/action"
 import type { ACTION, Player, Room } from "./player"
 
 type GameInitializationObject = {
@@ -6,16 +6,22 @@ type GameInitializationObject = {
   player: Player
 }
 
-type Game<TInitializer extends GameInitializationObject = any> = {
-  "map": TInitializer['map'],
-  "player": TInitializer['player']
+export type Game<TMap extends Array<Array<Room>> = Array<Array<Room>>, TPlayer extends Player = Player> = {
+  "map": TMap,
+  "player": TPlayer
 } 
 
 export namespace Game {
 
-  export type Create<TInitializer extends GameInitializationObject> = Game<TInitializer>
+  export type Create<TMap extends Array<Array<Room>>, TPlayer extends Player> = Game<TMap, TPlayer>
   export type GetPlayer<TGame extends Game> = TGame["player"]
   export type GetMap<TGame extends Game> = TGame["map"]
+
+  export type UpdatePlayer<TGame extends Game, TPlayer extends Player> =
+    Game<
+      Game.GetMap<TGame>,
+      TPlayer
+    >
 
   /**
    * Functionality relating to trigger actions in the game. For now this is player actions,
@@ -24,16 +30,13 @@ export namespace Game {
   export namespace Action {
 
     export type PlayerAction<TGame extends Game, TAction extends ACTION> = 
-      Game<{
-        map: Game.GetMap<TGame>,
-        player: _Action<Game.GetPlayer<TGame>, TAction>
-      }>
+      _PlayerAction<TGame, TAction>
 
     export type ChainPlayerActions<TGame extends Game, TActions extends Array<ACTION>> =
-      Game<{
-        map: Game.GetMap<TGame>,
-        player: _ChainActions<Game.GetPlayer<TGame>, TActions>
-      }>
+      Game<
+        Game.GetMap<TGame>,
+        _ChainPlayerActions<TGame, TActions>
+      >
 
   }
 }

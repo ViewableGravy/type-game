@@ -1,19 +1,23 @@
+import type { Game } from "../game";
 import type { Shift } from "../helper";
 import type { ACTION, DIRECTION, Player } from "../player";
-import type { Navigate } from "./direction";
-import type { HandleInventory } from "./inventory";
+import type { NavigatePlayer } from "./direction";
 
-export type _Action<TPlayer extends Player, TAction extends ACTION> =
+/**
+ * @returns {Game}
+ */
+export type _PlayerAction<TGame extends Game, TAction extends ACTION> =
   TAction extends DIRECTION 
-    ? Navigate<TPlayer, TAction> : 
-  TAction extends "inventory" 
-    ? HandleInventory<TPlayer> :
-  TPlayer
+    ? NavigatePlayer<TGame, TAction> 
+    : TGame
 
-export type _ChainActions<TPlayer extends Player, TActions extends Array<ACTION>> =
+/**
+ * @returns {Player}
+ */
+export type _ChainPlayerActions<TGame extends Game, TActions extends Array<ACTION>> =
   TActions extends []
-    ? TPlayer
-    : _ChainActions<
-        _Action<TPlayer, TActions[0]>,
+    ? Game.GetPlayer<TGame>
+    : _ChainPlayerActions<
+        _PlayerAction<TGame, TActions[0]>,
         Shift<TActions>
       >

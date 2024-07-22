@@ -1,4 +1,5 @@
 import type { MapInstance } from "..";
+import type { Game } from "../game";
 import type { Int } from "../helpers/maths";
 import type { Player, DIRECTION, Location } from "../player"
 import type { ResolveMessages } from "../resolve";
@@ -7,54 +8,63 @@ import type { ResolveMessages } from "../resolve";
 export type GetY<TLocation extends Location> = TLocation[1]
 export type GetX<TLocation extends Location> = TLocation[0]
 
-export type GetYFromPlayer<TPlayer extends Player> = GetY<TPlayer["_location"]>
-export type GetXFromPlayer<TPlayer extends Player> = GetX<TPlayer["_location"]>
+export type GetYFromPlayer<TGame extends Game> = GetY<
+  Player.GetCurrentLocation<
+    Game.GetPlayer<TGame>
+  >
+>
 
-export type GetRoomAtLocation<TLocation extends Location> = MapInstance[GetY<TLocation>][GetX<TLocation>]
+export type GetXFromPlayer<TGame extends Game> = GetX<
+  Player.GetCurrentLocation<
+    Game.GetPlayer<TGame>
+  >
+>
 
-type HandleNorth<TPlayer extends Player> =
-  Player.Navigate.Can<TPlayer, "north"> extends false 
-    ? Player.History.PushMessage<TPlayer, ResolveMessages.NoPathPresent<"north">> : 
-  GetYFromPlayer<TPlayer> extends 0
-    ? Player.History.PushMessage<TPlayer, ResolveMessages.MapBoundaryPreventsNavigation<"north">> : 
-  Player.History.Visit<TPlayer, [
-    GetXFromPlayer<TPlayer>, 
-    Int.Sub<GetYFromPlayer<TPlayer>, 1>
+export type GetRoomAtLocation<TGame extends Game, TLocation extends Location> = Game.GetMap<TGame>[GetY<TLocation>][GetX<TLocation>]
+
+type HandleNorth<TGame extends Game> =
+  Player.Navigate.Can<TGame, "north"> extends false 
+    ? Player.SetDebug<TGame, ResolveMessages.NoPathPresent<"north">> : 
+  GetYFromPlayer<TGame> extends 0
+    ? Player.SetDebug<TGame, ResolveMessages.MapBoundaryPreventsNavigation<"north">> : 
+  Player.History.Visit<TGame, [
+    GetXFromPlayer<TGame>, 
+    Int.Sub<GetYFromPlayer<TGame>, 1>
   ]>
 
-type HandleSouth<TPlayer extends Player> =
-  Player.Navigate.Can<TPlayer, "south"> extends false 
-    ? Player.History.PushMessage<TPlayer, ResolveMessages.NoPathPresent<"south">> : 
-  GetYFromPlayer<TPlayer> extends Int.Sub<MapInstance['length'], 1>
-    ? Player.History.PushMessage<TPlayer, ResolveMessages.MapBoundaryPreventsNavigation<"south">> : 
-  Player.History.Visit<TPlayer, [
-    GetXFromPlayer<TPlayer>, 
-    Int.Add<GetYFromPlayer<TPlayer>, 1>
+type HandleSouth<TGame extends Game> =
+  Player.Navigate.Can<TGame, "south"> extends false 
+    ? Player.SetDebug<TGame, ResolveMessages.NoPathPresent<"south">> : 
+  GetYFromPlayer<TGame> extends Int.Sub<MapInstance['length'], 1>
+    ? Player.SetDebug<TGame, ResolveMessages.MapBoundaryPreventsNavigation<"south">> : 
+  Player.History.Visit<TGame, [
+    GetXFromPlayer<TGame>, 
+    Int.Add<GetYFromPlayer<TGame>, 1>
   ]>
 
-type HandleEast<TPlayer extends Player> =
-  Player.Navigate.Can<TPlayer, "east"> extends false 
-    ? Player.History.PushMessage<TPlayer, ResolveMessages.NoPathPresent<"east">> : 
-  GetXFromPlayer<TPlayer> extends Int.Sub<MapInstance[0]['length'], 1>
-    ? Player.History.PushMessage<TPlayer, ResolveMessages.MapBoundaryPreventsNavigation<"east">> : 
-  Player.History.Visit<TPlayer, [
-    Int.Add<GetXFromPlayer<TPlayer>, 1>, 
-    GetYFromPlayer<TPlayer>
+type HandleEast<TGame extends Game> =
+  Player.Navigate.Can<TGame, "east"> extends false 
+    ? Player.SetDebug<TGame, ResolveMessages.NoPathPresent<"east">> : 
+  GetXFromPlayer<TGame> extends Int.Sub<MapInstance[0]['length'], 1>
+    ? Player.SetDebug<TGame, ResolveMessages.MapBoundaryPreventsNavigation<"east">> : 
+  Player.History.Visit<TGame, [
+    Int.Add<GetXFromPlayer<TGame>, 1>, 
+    GetYFromPlayer<TGame>
   ]>
 
-type HandleWest<TPlayer extends Player> =
-  Player.Navigate.Can<TPlayer, "west"> extends false 
-    ? Player.History.PushMessage<TPlayer, ResolveMessages.NoPathPresent<"west">> : 
-  GetXFromPlayer<TPlayer> extends 0
-    ? Player.History.PushMessage<TPlayer, ResolveMessages.MapBoundaryPreventsNavigation<"west">> : 
-  Player.History.Visit<TPlayer, [
-    Int.Sub<GetXFromPlayer<TPlayer>, 1>, 
-    GetYFromPlayer<TPlayer>
+type HandleWest<TGame extends Game> =
+  Player.Navigate.Can<TGame, "west"> extends false 
+    ? Player.SetDebug<TGame, ResolveMessages.NoPathPresent<"west">> : 
+  GetXFromPlayer<TGame> extends 0
+    ? Player.SetDebug<TGame, ResolveMessages.MapBoundaryPreventsNavigation<"west">> : 
+  Player.History.Visit<TGame, [
+    Int.Sub<GetXFromPlayer<TGame>, 1>, 
+    GetYFromPlayer<TGame>
   ]>
 
-export type Navigate<TPlayer extends Player, TDirection extends DIRECTION> = 
-  TDirection extends "north" ? HandleNorth<TPlayer> :
-  TDirection extends "south" ? HandleSouth<TPlayer> :
-  TDirection extends "east" ? HandleEast<TPlayer> :
-  TDirection extends "west" ? HandleWest<TPlayer> :
+export type NavigatePlayer<TGame extends Game, TDirection extends DIRECTION> = 
+  TDirection extends "north" ? HandleNorth<TGame> :
+  TDirection extends "south" ? HandleSouth<TGame> :
+  TDirection extends "east" ? HandleEast<TGame> :
+  TDirection extends "west" ? HandleWest<TGame> :
   Player

@@ -1,3 +1,5 @@
+import type { Game } from "../game";
+import type { Prettify } from "../helper";
 import type { Int } from "../helpers/maths";
 import type { Location, Room } from "../player";
 import type { Hallway } from "./hallway";
@@ -27,17 +29,7 @@ type HandleRow<TRow extends Array<Room>, TRowNumber extends number, TColumnNumbe
 type HandleRoom<TColumn extends Room, TRowNumber extends number, TColumnNumber extends number> = TColumn & {
   location: [TColumnNumber, TRowNumber]
 }
-
-
-
-type Bedroom = { name: "bedroom", type: "room", north: true, south: false, east: false, west: false }
   
 export type GetY<TLocation extends Location> = TLocation[1]
 export type GetX<TLocation extends Location> = TLocation[0]
-export type GetRoomAtLocation<TLocation extends Location> = MapInstance[GetY<TLocation>][GetX<TLocation>]
-
-export type MapInstance = CreateMap<[
-  [Hallway<false, false, true, false>, Hallway<false, true, true, true>, Hallway<false, true, false, true>,  Hallway<false, true, true, false>],
-  [Hallway<true, false, false, false>, Hallway<true, true, false, false>, Bedroom,                           Hallway<true, false, false, false>],
-  [Hallway<false, false, true, false>, Hallway<false, false, true, true>, Hallway<false, false, true, true>, Hallway<false, false, true, false>]
-]>;
+export type GetRoomAtLocation<TGame extends Game, TLocation extends Location> = Game.GetMap<TGame>[GetY<TLocation>][GetX<TLocation>]
